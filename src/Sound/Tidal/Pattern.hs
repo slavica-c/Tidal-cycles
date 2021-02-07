@@ -281,7 +281,8 @@ data Value = VS { svalue :: String   }
            | VI { ivalue :: Int      }
            | VB { bvalue :: Bool     }
            | VX { xvalue :: [Word8]  } -- Used for OSC 'blobs'
-           deriving (Typeable, Data, Generic)
+           | VState {statevalue :: ControlMap -> (ControlMap, Value)}
+           deriving (Typeable, Generic)
 
 class Valuable a where
   toValue :: a -> Value
@@ -354,6 +355,9 @@ instance Ord Value where
   compare (VF x) (VN y) = compare x (unNote y)
   compare (VN x) (VF y) = compare (unNote x) y
 
+  compare (VState _) (VState _) = EQ
+  compare (VState _) _          = GT
+  compare _ (VState _)          = LT
 
 type StateMap = Map.Map String (Pattern Value)
 type ControlMap = Map.Map String Value
@@ -835,3 +839,12 @@ matchManyToOne f pa pb = pa {query = q}
                 where as' = as $ start $ wholeOrPart ex
             as s = query pa $ fQuery s
             fQuery s = st {arc = Arc s s}
+
+-- Resolves higher order VState values to plain values, by passing through (and changing) state
+resolveState :: ControlMap -> [Event ControlMap] -> (ControlMap, [Event ControlMap])
+resolveState sMap [] = (sMap, [])
+resolveState sMap (e:es) = (sMap'', (e {value = v'}):es')
+  where f sm (VState v) = v sm
+        f sm v = (sm, v)
+        (sMap', v') = Map.mapAccum f sMap (value e)
+        (sMap'', es') = resolveState sMap' es

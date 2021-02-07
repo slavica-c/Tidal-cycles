@@ -48,6 +48,7 @@ import           Data.Word (Word8)
 data Stream = Stream {sConfig :: Config,
                       sBusses :: MVar [Int],
                       sInput :: MVar StateMap,
+                      sCState :: MVar ControlMap,
                       -- sOutput :: MVar ControlPattern,
                       sListen :: Maybe O.UDP,
                       sPMapMV :: MVar PlayMap,
@@ -188,6 +189,7 @@ startStream :: Config -> [(Target, [OSC])] -> IO Stream
 startStream config oscmap 
   = do sMapMV <- newMVar Map.empty
        pMapMV <- newMVar Map.empty
+       csMapMV <- newMVar Map.empty
        bussesMV <- newMVar []
        globalFMV <- newMVar id
        tempoMV <- newEmptyMVar
@@ -211,6 +213,7 @@ startStream config oscmap
        let stream = Stream {sConfig = config,
                             sBusses = bussesMV,
                             sInput = sMapMV,
+                            sCState = csMapMV,
                             sListen = listen,
                             sPMapMV = pMapMV,
                             sTempoMV = tempoMV,
@@ -253,6 +256,7 @@ toDatum (VR x) = O.float $ ((fromRational x) :: Double)
 toDatum (VB True) = O.int32 (1 :: Int)
 toDatum (VB False) = O.int32 (0 :: Int)
 toDatum (VX xs) = O.Blob $ O.blob_pack xs
+toDatum _ = error "toDatum: unhandled value"
 
 toData :: OSC -> Event ControlMap -> Maybe [O.Datum]
 toData (OSC {args = ArgList as}) e = fmap (fmap (toDatum)) $ sequence $ map (\(n,v) -> Map.lookup n (value e) <|> v) as
@@ -286,6 +290,7 @@ getString cm s = defaultValue $ simpleShow <$> Map.lookup s cm
                             simpleShow (VR r) = show r
                             simpleShow (VB b) = show b
                             simpleShow (VX xs) = show xs
+                            simpleShow (VState _s) = "<stateful>"
                             (_, dflt) = break (== '=') s
                             defaultValue :: Maybe String -> Maybe String
                             defaultValue Nothing | null dflt = Nothing
@@ -421,6 +426,7 @@ doTick fake stream st =
   modifyMVar_ (sTempoMV stream) $ \ tempo -> do
      pMap <- readMVar (sPMapMV stream)
      sMap <- readMVar (sInput stream)
+     csMap <- takeMVar (sCState stream)
      busses <- readMVar (sBusses stream)
      sGlobalF <- readMVar (sGlobalFMV stream)
      -- putStrLn $ show st
@@ -441,9 +447,11 @@ doTick fake stream st =
                                                         controls = sMap'
                                                        }
                                                 )
+         (csMap', es') = resolveState csMap es
          -- TODO onset is calculated in toOSC as well..
          on e tempo'' = (sched tempo'' $ start $ wholeOrPart e)
-         (tes, tempo') = processCps tempo $ es
+         (tes, tempo') = processCps tempo $ es'
+     putMVar (sCState stream) csMap'
      forM_ cxs $ \cx@(Cx target _ oscs _ _) -> do
          let latency = oLatency target + extraLatency
              ms = concatMap (\(t, e) ->
@@ -455,7 +463,6 @@ doTick fake stream st =
            hPutStrLn stderr $ "Failed to send. Is the '" ++ oName target ++ "' target running? " ++ show e
 
      tempo' `seq` return tempo'
-
 
 setPreviousPatternOrSilence :: Stream -> IO ()
 setPreviousPatternOrSilence stream =
