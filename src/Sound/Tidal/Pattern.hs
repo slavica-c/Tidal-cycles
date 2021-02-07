@@ -846,5 +846,8 @@ resolveState sMap [] = (sMap, [])
 resolveState sMap (e:es) = (sMap'', (e {value = v'}):es')
   where f sm (VState v) = v sm
         f sm v = (sm, v)
-        (sMap', v') = Map.mapAccum f sMap (value e)
+        (sMap', v') | eventHasOnset e = Map.mapAccum f sMap (value e)    -- pass state through VState functions
+                    | otherwise = (sMap, Map.filter notVState $ value e) -- filter out VState values without onsets
         (sMap'', es') = resolveState sMap' es
+        notVState (VState _) = False
+        notVState _ = True
