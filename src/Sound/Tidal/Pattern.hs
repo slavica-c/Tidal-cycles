@@ -682,6 +682,7 @@ applyFIS f _ _ (VF f') = VF (f f')
 applyFIS f _ _ (VN (Note f')) = VN (Note $ f f')
 applyFIS _ f _ (VI i) = VI (f i)
 applyFIS _ _ f (VS s) = VS (f s)
+applyFIS f f' f'' (VState x) = VState $ \cmap -> (applyFIS f f' f'') <$> (x cmap)
 applyFIS _ _ _ v = v
 
 -- | Apply one of two functions to a pair of Values, depending on their types (int
@@ -692,6 +693,8 @@ fNum2 _    fFloat (VF a) (VF b) = VF (fFloat a b)
 fNum2 _    fFloat (VN (Note a)) (VN (Note b)) = VN (Note $ fFloat a b)
 fNum2 _    fFloat (VI a) (VF b) = VF (fFloat (fromIntegral a) b)
 fNum2 _    fFloat (VF a) (VI b) = VF (fFloat a (fromIntegral b))
+fNum2 fInt fFloat (VState a) b = VState $ \cmap -> ((\a' -> fNum2 fInt fFloat a' b) <$> (a cmap))
+fNum2 fInt fFloat a (VState b) = VState $ \cmap -> ((\b' -> fNum2 fInt fFloat a b') <$> (b cmap))
 fNum2 _    _      x      _      = x
 
 getI :: Value -> Maybe Int
