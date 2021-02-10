@@ -691,6 +691,8 @@ fNum2 :: (Int -> Int -> Int) -> (Double -> Double -> Double) -> Value -> Value -
 fNum2 fInt _      (VI a) (VI b) = VI (fInt a b)
 fNum2 _    fFloat (VF a) (VF b) = VF (fFloat a b)
 fNum2 _    fFloat (VN (Note a)) (VN (Note b)) = VN (Note $ fFloat a b)
+fNum2 _    fFloat (VF a) (VN (Note b)) = VN (Note $ fFloat a b)
+fNum2 _    fFloat (VN (Note a)) (VF b) = VN (Note $ fFloat a b)
 fNum2 _    fFloat (VI a) (VF b) = VF (fFloat (fromIntegral a) b)
 fNum2 _    fFloat (VF a) (VI b) = VF (fFloat a (fromIntegral b))
 fNum2 fInt fFloat (VState a) b = VState $ \cmap -> ((\a' -> fNum2 fInt fFloat a' b) <$> (a cmap))
