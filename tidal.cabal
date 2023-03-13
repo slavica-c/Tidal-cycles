@@ -40,6 +40,7 @@ library
                        Sound.Tidal.Scales
                        Sound.Tidal.Safe.Context
                        Sound.Tidal.Safe.Boot
+                       Sound.Tidal.Sequence
                        Sound.Tidal.Show
                        Sound.Tidal.Simple
                        Sound.Tidal.Stream
@@ -50,6 +51,7 @@ library
                        Sound.Tidal.UI
                        Sound.Tidal.Utils
                        Sound.Tidal.Version
+                       Sound.Tidal.Konnakol
                        Paths_tidal
   Build-depends:
       base >=4.8 && <5
@@ -86,6 +88,7 @@ test-suite tests
                  Sound.Tidal.UITest
                  Sound.Tidal.UtilsTest
                  Sound.Tidal.ExceptionsTest
+                 Sound.Tidal.SequenceTest
                  TestUtils
   build-depends:
                 base ==4.*
