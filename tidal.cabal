@@ -1,7 +1,7 @@
 cabal-version:       2.0
 
 name:                tidal
-version:             2.0.0-pre
+version:             2.0.0
 synopsis:            Pattern language for improvised music
 description:         Tidal is a domain specific language for live coding patterns.
 homepage:            http://tidalcycles.org/
@@ -19,7 +19,7 @@ data-files:          BootTidal.hs
 Extra-source-files: README.md CHANGELOG.md tidal.el
 
 library
-  ghc-options: -Wall
+  ghc-options: -Wall -Wno-orphans 
   hs-source-dirs:
                  src
 
@@ -76,7 +76,7 @@ library
     , bytestring < 0.12
     , clock < 0.9
     , deepseq >= 1.1.0.0
-    , primitive < 0.9
+    , primitive < 0.10
     , random < 1.3
     , exceptions < 0.11
     , mtl >= 2.2
@@ -93,7 +93,6 @@ test-suite tests
                  -- Sound.Tidal.CoreTest
                  -- Sound.Tidal.ParamsTest
                  -- Sound.Tidal.ParseTest
-                 -- Sound.Tidal.PatternTest
                  -- Sound.Tidal.ChordsTest
                  -- Sound.Tidal.StreamTest
                  -- Sound.Tidal.UITest
@@ -104,6 +103,7 @@ test-suite tests
                  Sound.Tidal.ExceptionsTest
                  Sound.Tidal.ParamsTest
                  Sound.Tidal.ParseBPTest
+                 Sound.Tidal.PatternTest
                  Sound.Tidal.ScalesTest
                  Sound.Tidal.SequenceTest
                  Sound.Tidal.SignalBaseTest

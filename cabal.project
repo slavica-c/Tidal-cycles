@@ -1,1 +1,1 @@
-packages: ./ tidal-link
+packages: tidal-core, tidal-stream, tidal-link, tidal-params-dirt
