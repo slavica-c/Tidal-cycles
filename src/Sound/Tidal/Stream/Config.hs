@@ -1,5 +1,7 @@
 module Sound.Tidal.Stream.Config where
 
+import           Control.Monad     (when)
+
 import qualified Sound.Tidal.Clock as Clock
 
 {-
@@ -20,15 +22,15 @@ import qualified Sound.Tidal.Clock as Clock
     along with this library.  If not, see <http://www.gnu.org/licenses/>.
 -}
 
-data Config = Config {cCtrlListen :: Bool,
-                      cCtrlAddr :: String,
-                      cCtrlPort :: Int,
+data Config = Config {cCtrlListen    :: Bool,
+                      cCtrlAddr      :: String,
+                      cCtrlPort      :: Int,
                       cCtrlBroadcast :: Bool,
                       -- cTempoAddr :: String,
                       -- cTempoPort :: Int,
                       -- cTempoClientPort :: Int,
-                      cVerbose :: Bool,
-                      cClockConfig :: Clock.ClockConfig
+                      cVerbose       :: Bool,
+                      cClockConfig   :: Clock.ClockConfig
                      }
 
 defaultConfig :: Config
@@ -42,3 +44,6 @@ defaultConfig = Config {cCtrlListen = True,
                         cVerbose = True,
                         cClockConfig = Clock.defaultConfig
                        }
+
+verbose :: Config -> String -> IO ()
+verbose c s = when (cVerbose c) $ putStrLn s
